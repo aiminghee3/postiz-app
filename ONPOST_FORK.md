@@ -59,6 +59,20 @@ They never modify the real fork or publish application content.
 
 ## Deployment boundary
 
+The Onpost brand changes also live on `main` so upstream sync retains them.
+Production branding is built from **`onpost/release`**, initially based on the
+already-running upstream **v2.25.1**. `Build Onpost release` builds a versioned
+`ghcr.io/aiminghee3/onpost:sha-<commit>` image on release-branch changes, verifies
+signed-out and cookie-bearing access to license/source information, and publishes
+the image. It does not automatically deploy it. `Dockerfile.onpost` is intended
+for this matching release source and rebuilds only the frontend; it retains the
+exact production backend and worker. Do not use it to apply a newer backend's
+source or migrations. See `ONPOST_CHANGES.md` for reproduction instructions.
+
+Upgrading the runtime to a newer upstream release is a separate release operation:
+review the application/schema changes, update the release base and pinned image,
+retain Onpost changes, run the affected checks, then deploy the validated digest.
+
 Synchronizing this repository does **not** build or deploy an image, change
 `onpost.me`, open registration, or copy production configuration into this public
 fork. The existing private deployment/DM automation checkout remains at

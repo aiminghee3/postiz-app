@@ -47,7 +47,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </head>
       <ChangeDirClient />
       <body
-        className={clsx(jakartaSans.className, 'dark text-primary !bg-primary flex min-h-screen flex-col')}
+        className={clsx(
+          jakartaSans.className,
+          'dark text-primary !bg-primary flex min-h-screen flex-col'
+        )}
       >
         <VariableContextComponent
           storageProvider={
@@ -102,9 +105,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <DubAnalytics />
             <FacebookComponent />
             <GoogleTagManagerComponent gtmId={process.env.NEXT_PUBLIC_GTM_ID} />
-            <Plausible
-              domain="onpost.me"
-            >
+            <Plausible domain="onpost.me">
               <LayoutContext>
                 <UtmSaver />
                 {children}
