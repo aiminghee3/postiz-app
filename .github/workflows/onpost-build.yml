@@ -46,36 +46,16 @@ jobs:
         id: build
         working-directory: source
         run: |
-          build_log=/tmp/onpost-buildx.log
-          : > "$build_log"
-          script -q -e -c 'docker buildx build --progress=tty \
-            --output=type=registry,compression=zstd,compression-level=1,oci-mediatypes=true \
+          set -euo pipefail
+          image_tag="$IMAGE_NAME:sha-$GITHUB_SHA"
+          docker buildx build \
+            --load \
             --platform linux/amd64 \
             --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
-            -t "$IMAGE_NAME:sha-$GITHUB_SHA" \
-            --metadata-file /tmp/onpost-image-metadata.json \
-            -f Dockerfile.onpost .' /dev/null > "$build_log" 2>&1 &
-          build_pid=$!
-          elapsed=0
-          last_line=0
-          while kill -0 "$build_pid" 2>/dev/null; do
-            sleep 20
-            current_line="$(wc -l < "$build_log")"
-            if [ "$current_line" -gt "$last_line" ]; then
-              sed -n "$((last_line + 1)),$((current_line))p" "$build_log"
-              last_line="$current_line"
-            else
-              printf 'BuildKit still active after %ss; waiting for image export\n' "$elapsed"
-            fi
-            elapsed=$((elapsed + 20))
-          done
-          set +e
-          wait "$build_pid"
-          build_status=$?
-          set -e
-          tr '\r' '\n' < "$build_log" | tail -n 80
-          test "$build_status" -eq 0
-          digest="$(jq -r '.["containerimage.digest"]' /tmp/onpost-image-metadata.json)"
+            -t "$image_tag" \
+            -f Dockerfile.onpost .
+          docker push "$image_tag" | tee /tmp/onpost-push.log
+          digest="$(sed -n 's/^.*digest: \(sha256:[a-f0-9]\{64\}\).*$/\1/p' /tmp/onpost-push.log | tail -n 1)"
           test "${#digest}" -eq 71
           printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
 
