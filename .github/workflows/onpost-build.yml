@@ -46,13 +46,27 @@ jobs:
         id: build
         working-directory: source
         run: |
+          set +e
           docker buildx build --progress=plain \
             --output=type=registry,compression=gzip,compression-level=1 \
             --platform linux/amd64 \
             --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
             -t "$IMAGE_NAME:sha-$GITHUB_SHA" \
             --metadata-file /tmp/onpost-image-metadata.json \
-            -f Dockerfile.onpost .
+            -f Dockerfile.onpost . &
+          build_pid=$!
+          elapsed=0
+          while kill -0 "$build_pid" 2>/dev/null; do
+            sleep 30
+            elapsed=$((elapsed + 30))
+            if kill -0 "$build_pid" 2>/dev/null; then
+              printf 'BuildKit is still processing the image (%ss elapsed)\n' "$elapsed"
+            fi
+          done
+          wait "$build_pid"
+          build_status=$?
+          set -e
+          test "$build_status" -eq 0
           digest="$(jq -r '.["containerimage.digest"]' /tmp/onpost-image-metadata.json)"
           test "${#digest}" -eq 71
           printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
