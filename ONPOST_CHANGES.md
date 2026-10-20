@@ -17,6 +17,8 @@ Postiz: Copyright (C) 2025 Nevo David.
   approved-account and operator-workspace availability instead of obsolete plans.
 - Add public service terms and privacy disclosures with the operator's supplied
   business identity, platform permission revocation and deletion contact details.
+- Disclose browser-local landing/referral storage and the deployment's disabled
+  external analytics, advertising pixels and session replay.
 
 ## Reproduce this deployment
 
