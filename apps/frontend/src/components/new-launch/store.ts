@@ -47,6 +47,8 @@ interface StoreState {
   setLocked: (locked: boolean) => void;
   integrations: Integrations[];
   selectedIntegrations: SelectedIntegrations[];
+  publishBlockers: Record<string, string>;
+  setPublishBlocker: (integrationId: string, reason?: string) => void;
   global: Values[];
   internal: Internal[];
   addGlobalValue: (index: number, value: Values[]) => void;
@@ -159,6 +161,7 @@ const initialState = {
   hide: false,
   integrations: [] as Integrations[],
   selectedIntegrations: [] as SelectedIntegrations[],
+  publishBlockers: {} as Record<string, string>,
   global: [] as Values[],
   internal: [] as Internal[],
   chars: {},
@@ -166,6 +169,13 @@ const initialState = {
 
 export const useLaunchStore = create<StoreState>()((set) => ({
   ...initialState,
+  setPublishBlocker: (integrationId, reason) => set((state) => {
+    if (state.publishBlockers[integrationId] === reason) return state;
+    const publishBlockers = { ...state.publishBlockers };
+    if (reason) publishBlockers[integrationId] = reason;
+    else delete publishBlockers[integrationId];
+    return { publishBlockers };
+  }),
   setCurrent: (current: string) =>
     set((state) => ({
       current: current,

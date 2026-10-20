@@ -1,4 +1,4 @@
-# Onpost modification, 2026-10-20: branded frontend and minimal YouTube OAuth scopes.
+# Onpost modification, 2026-10-20: branding and reviewed platform access changes.
 # Preserve the production dependency lock, database schema and workflow sources.
 FROM ghcr.io/gitroomhq/postiz-app@sha256:d2b37802e96757729fdea2d3d71287f841c2b619faa1cb4c21dac07df657fde1
 ARG ONPOST_SOURCE_REF
@@ -7,12 +7,17 @@ ENV ONPOST_SOURCE_REF=$ONPOST_SOURCE_REF
 ENV NEXT_PUBLIC_VERSION=onpost-2026.10.20
 WORKDIR /app
 COPY libraries/nestjs-libraries/src/integrations/social/youtube.provider.ts /app/libraries/nestjs-libraries/src/integrations/social/youtube.provider.ts
+COPY libraries/nestjs-libraries/src/integrations/social/tiktok.provider.ts /app/libraries/nestjs-libraries/src/integrations/social/tiktok.provider.ts
+COPY libraries/nestjs-libraries/src/dtos/posts/providers-settings/tiktok.dto.ts /app/libraries/nestjs-libraries/src/dtos/posts/providers-settings/tiktok.dto.ts
 COPY var/onpost/verify-youtube-scopes.cjs /app/var/onpost/verify-youtube-scopes.cjs
-RUN NODE_OPTIONS="--max-old-space-size=3072" pnpm run build:backend && NODE_OPTIONS="--max-old-space-size=3072" pnpm run build:orchestrator && node var/onpost/verify-youtube-scopes.cjs
+COPY var/onpost/verify-tiktok-posting.cjs /app/var/onpost/verify-tiktok-posting.cjs
+RUN NODE_OPTIONS="--max-old-space-size=3072" pnpm run build:backend && NODE_OPTIONS="--max-old-space-size=3072" pnpm run build:orchestrator && node var/onpost/verify-youtube-scopes.cjs && node var/onpost/verify-tiktok-posting.cjs
 COPY apps/frontend /app/apps/frontend
+COPY var/onpost/verify-publish-blockers.cjs /app/var/onpost/verify-publish-blockers.cjs
+RUN node var/onpost/verify-publish-blockers.cjs
 COPY libraries/react-shared-libraries/src/translation/locales /app/libraries/react-shared-libraries/src/translation/locales
 COPY LICENSE ONPOST_CHANGES.md Dockerfile.onpost /app/
-RUN NODE_OPTIONS="--max-old-space-size=4096" NEXT_TELEMETRY_DISABLED=1 pnpm run build:frontend
+RUN NODE_OPTIONS="--max-old-space-size=4096" NEXT_TELEMETRY_DISABLED=1 pnpm run build:frontend && rm -rf /app/apps/frontend/.next/cache
 LABEL org.opencontainers.image.title="Onpost" \
       org.opencontainers.image.source="https://github.com/aiminghee3/postiz-app" \
       org.opencontainers.image.revision=$ONPOST_SOURCE_REF \

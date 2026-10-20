@@ -1,8 +1,45 @@
 import {
-  IsBoolean, ValidateIf, IsIn, IsString, MaxLength, IsOptional, IsDefined, IsNumber, Min, Max, ValidateNested
+  IsBoolean, ValidateIf, IsIn, IsString, MaxLength, IsOptional, IsDefined, IsNumber, Min, Max, ValidateNested, Validate, ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { JSONSchema } from 'class-validator-jsonschema';
+
+export interface TikTokCreatorInfo {
+  nickname: string;
+  avatarUrl: string;
+  privacyLevelOptions: string[];
+  commentDisabled: boolean;
+  duetDisabled: boolean;
+  stitchDisabled: boolean;
+  maxDurationSeconds: number;
+}
+
+@ValidatorConstraint({ name: 'tiktokVideoDuration', async: false })
+class TikTokVideoDuration implements ValidatorConstraintInterface {
+  validate(duration: number, args: ValidationArguments) {
+    const max = (args.object as TikTokDto).creator_max_duration_seconds;
+    return Number.isFinite(duration) && duration > 0 && Number.isFinite(max) && duration <= max;
+  }
+  defaultMessage() {
+    return 'The video exceeds the duration allowed by this TikTok account, or its duration could not be read.';
+  }
+}
+
+@ValidatorConstraint({ name: 'tiktokDisclosure', async: false })
+class TikTokDisclosure implements ValidatorConstraintInterface {
+  validate(branded: boolean, args: ValidationArguments) {
+    const post = args.object as TikTokDto & { disclose?: boolean };
+    if (post.content_posting_method === 'UPLOAD') return true;
+    return !(branded && post.privacy_level === 'SELF_ONLY') &&
+      !(post.disclose && !branded && !post.brand_organic_toggle);
+  }
+  defaultMessage(args: ValidationArguments) {
+    const post = args.object as TikTokDto;
+    return post.brand_content_toggle && post.privacy_level === 'SELF_ONLY'
+      ? 'Branded content cannot use private visibility.'
+      : 'Select Your brand, Branded content, or both when disclosure is enabled.';
+  }
+}
 
 export class TikTokMusic {
   @IsDefined()
@@ -69,6 +106,20 @@ export class TikTokLocation {
 // Fields stay required here (existing clients depend on it); the constraints are
 // documented, not enforced.
 export class TikTokDto {
+  @IsOptional()
+  @IsBoolean()
+  disclose?: boolean;
+
+  // Browser metadata check. TikTok also enforces duration on the server; clients
+  // that upload via API are not required to supply browser-only metadata.
+  @IsOptional()
+  @IsNumber()
+  creator_max_duration_seconds?: number;
+
+  @ValidateIf((p) => p.content_posting_method !== 'UPLOAD' && p.video_duration_seconds !== undefined)
+  @Validate(TikTokVideoDuration)
+  video_duration_seconds?: number;
+
   @ValidateIf((p) => p.title)
   @MaxLength(90)
   @JSONSchema({
@@ -77,6 +128,7 @@ export class TikTokDto {
   })
   title: string;
 
+  @ValidateIf((p) => p.content_posting_method !== 'UPLOAD')
   @IsIn([
     'PUBLIC_TO_EVERYONE',
     'MUTUAL_FOLLOW_FRIENDS',
@@ -125,6 +177,7 @@ export class TikTokDto {
   autoAddMusic: 'yes' | 'no';
 
   @IsBoolean()
+  @Validate(TikTokDisclosure)
   @JSONSchema({
     description:
       'Applied only when content_posting_method=DIRECT_POST. Ignored by TikTok on UPLOAD.',

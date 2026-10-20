@@ -13,8 +13,16 @@ Postiz: Copyright (C) 2025 Nevo David.
 - Preserve the production v2.25.1 Prisma schema, workflow sources and dependencies.
 - Reduce YouTube OAuth requests to profile, read-only channel data, video upload
   and read-only analytics access. Remove unused email/CMS partner access and broad
-  YouTube scopes. Rebuild the API and worker from the pinned base with only this
-  provider source changed, and verify their compiled authorization URLs.
+  YouTube scopes. Rebuild the API and worker from the pinned base with the
+  reviewed provider overlays, and verify their compiled authorization URLs.
+- Use fresh TikTok creator controls for privacy, interactions and duration, with
+  explicit privacy selection, unchecked interactions and commercial disclosure
+  validation. Keep a generic composer publication blocker for both desktop and
+  mobile actions; draft actions stay available. Keep preview-only authoring
+  independent from real-account posting controls.
+- Pull server-hosted TikTok media from its verified URL. Treat ambiguous pull
+  initialization as an unconfirmed outcome requiring operator inspection instead
+  of automatically replaying a potentially accepted publication.
 - Add a Korean public landing page with channel previews, scheduling and Instagram
   comment-to-DM explanations. Preserve signed-in dashboard and invitation routing.
 - Link landing calls to action to the existing login and disclose the current
@@ -46,6 +54,6 @@ Use the upstream Docker Compose installation with this image, your domain, and
 your own private credentials. The original installation configuration is at
 https://github.com/gitroomhq/postiz-docker-compose . Do not publish credentials or
 user data. `Dockerfile.onpost` rebuilds the frontend and the API/worker from the
-pinned base. The only backend source overlay is the minimal YouTube OAuth scope
-change; existing workflow sources, dependency lock and database schema are kept.
+pinned base. Backend overlays are the YouTube OAuth scopes, TikTok provider and
+TikTok settings DTO; existing workflow sources, dependency lock and database schema are kept.
 Future backend upgrades require their own migration and deployment checks.

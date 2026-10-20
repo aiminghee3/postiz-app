@@ -125,6 +125,13 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
       activateExitButton: state.activateExitButton,
     }))
   );
+  const publishBlockers = useLaunchStore((state) => state.publishBlockers);
+  // Published posts and sibling groups first resolve their per-channel actions.
+  // New posts and single unpublished drafts/queues can be blocked immediately.
+  const needsSaveDecision = existingData?.integration &&
+    (existingData.siblings?.length || existingData.posts?.[0]?.state === 'PUBLISHED' ||
+      (existingData.posts?.[0]?.state === 'QUEUE' && dayjs().isAfter(date)));
+  const publishBlockReason = dummy || needsSaveDecision ? undefined : selectedIntegrations.map((item) => publishBlockers[item.integration.id]).find(Boolean);
   // the other channels of an existing post show and move only their own date
   const channelDate = channelDates[current];
   const pickerDate = channelDate || date;
@@ -470,6 +477,9 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
           .join(', ');
         const isRecurring =
           !!repeater || !!existingData?.posts?.[0]?.intervalInDays;
+        const republishBlockReason = republishing
+          .filter((post) => selectedIntegrations.some((item) => item.integration.id === post.integration))
+          .map((post) => publishBlockers[post.integration]).find(Boolean);
 
         // it closes on a choice, so a save that then fails its checks shows
         // the channel to fix
@@ -494,6 +504,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                       )}
                     </div>
                   )}
+                  {republishBlockReason && <p className="mt-[10px] text-red-400">{republishBlockReason}</p>}
                 </div>
                 <div className="flex w-full gap-[10px]">
                   <div className="flex-1 flex">
@@ -519,6 +530,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                         modal.closeById('republish-post');
                         resolve('republish');
                       }}
+                      disabled={!!republishBlockReason}
                     >
                       {t('republish_the_post', 'Republish the post')}
                     </Button>
@@ -544,6 +556,16 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
         }
       }
 
+      const blockedPublication = dummy ? undefined : selectedIntegrations.map((item) => {
+        const saveType = saveTypeOf(item.integration.id);
+        const wasPublished = published.some((post) => post.integration === item.integration.id);
+        return (saveType === 'now' || saveType === 'schedule') && (!wasPublished || republish)
+          ? publishBlockers[item.integration.id] : undefined;
+      }).find(Boolean);
+      if (blockedPublication) {
+        toaster.show(blockedPublication);
+        return;
+      }
       setLoading(true);
 
       // Pull the local values to build the payload, but rely on the server
@@ -802,6 +824,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
       addEditSets,
       dummy,
       shortlinkPreferenceData,
+      publishBlockers,
     ]
   );
 
@@ -826,6 +849,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
           label: scheduleLabel,
           variant: 'primary',
           onClick: schedule('schedule'),
+          disabled: !!publishBlockReason,
         },
         ...(!dummy
           ? [
@@ -833,6 +857,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                 label: t('post_now', 'Post Now'),
                 variant: 'secondary' as const,
                 onClick: schedule('now'),
+                disabled: !!publishBlockReason,
               },
             ]
           : []),
@@ -899,6 +924,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
             }}
           />
         </MobileTopBar>
+        {publishBlockReason && <p role="status" className="px-[20px] py-[8px] text-[13px] text-red-400">{publishBlockReason}</p>}
         <div className="flex-1 flex mobile:contents">
           <div
             className={clsx(
@@ -1152,9 +1178,10 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
               <div ref={postNowRef} className="group cursor-pointer relative">
                 <button
                   disabled={
-                    selectedIntegrations.length === 0 || loading || locked
+                    selectedIntegrations.length === 0 || loading || locked || !!publishBlockReason
                   }
                   onClick={schedule('schedule')}
+                  title={publishBlockReason}
                   className="text-white relative min-w-[180px] btnSub disabled:cursor-not-allowed disabled:opacity-80 outline-none gap-[8px] flex justify-center items-center h-[44px] rounded-[8px] bg-[#612BD3] ps-[20px] pe-[16px]"
                 >
                   {loading && (
@@ -1194,7 +1221,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                   <button
                     onClick={schedule('now')}
                     disabled={
-                      selectedIntegrations.length === 0 || loading || locked
+                      selectedIntegrations.length === 0 || loading || locked || !!publishBlockReason
                     }
                     className={clsx(
                       'rounded-[8px] z-[300] disabled:cursor-not-allowed disabled:opacity-80 absolute bottom-[100%] -left-[12px] p-[12px] w-[206px] bg-newBgColorInner',

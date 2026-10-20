@@ -15,13 +15,15 @@ import {
   SocialAbstract,
   ValidityMedia,
 } from '@gitroom/nestjs-libraries/integrations/social.abstract';
-import { TikTokDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/tiktok.dto';
+import { TikTokCreatorInfo, TikTokDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/tiktok.dto';
 import { timer } from '@gitroom/helpers/utils/timer';
 import { hasExtension } from '@gitroom/helpers/utils/has.extension';
 import { createReadStream } from 'fs';
 import { getSsrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
 import { Integration } from '@prisma/client';
 import { Rules } from '@gitroom/nestjs-libraries/chat/rules.description.decorator';
+import { Context } from '@temporalio/activity';
+import { setHeartbeatDetails } from '@gitroom/nestjs-libraries/temporal/temporal.heartbeat';
 
 @Rules(
   [
@@ -417,11 +419,9 @@ export class TiktokProvider extends SocialAbstract implements SocialProvider {
     };
   }
 
-  async maxVideoLength(accessToken: string) {
-    const {
-      data: { max_video_post_duration_sec },
-    } = await (
-      await fetch(
+  async creatorInfo(accessToken: string): Promise<TikTokCreatorInfo> {
+    const response = await (
+      await this.fetch(
         'https://open.tiktokapis.com/v2/post/publish/creator_info/query/',
         {
           method: 'POST',
@@ -433,9 +433,29 @@ export class TiktokProvider extends SocialAbstract implements SocialProvider {
       )
     ).json();
 
+    const data = response?.data;
+    const options = data?.privacy_level_options;
+    if (response?.error?.code !== 'ok' || !Array.isArray(options) || !options.length ||
+      !Number.isFinite(data?.max_video_post_duration_sec)) {
+      throw new BadBody(this.identifier, '{}', '{}',
+        'TikTok creator information is unavailable or posting is limited. Please try again later.');
+    }
+    // Return only posting controls, never the raw provider response.
     return {
-      maxDurationSeconds: max_video_post_duration_sec,
+      nickname: data.creator_nickname || '',
+      avatarUrl: data.creator_avatar_url || '',
+      privacyLevelOptions: options.filter((value: string) =>
+        ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'].includes(value)),
+      commentDisabled: data.comment_disabled !== false,
+      duetDisabled: data.duet_disabled !== false,
+      stitchDisabled: data.stitch_disabled !== false,
+      maxDurationSeconds: data.max_video_post_duration_sec,
     };
+  }
+
+  async maxVideoLength(accessToken: string) {
+    const info = await this.creatorInfo(accessToken);
+    return { maxDurationSeconds: info.maxDurationSeconds };
   }
 
   // Single status check for a publish_id, no loops and no timers: `post` returns
@@ -573,8 +593,7 @@ export class TiktokProvider extends SocialAbstract implements SocialProvider {
             ? { title: firstPost.message }
             : {}),
           ...(isPhoto ? { description: firstPost.message } : {}),
-          privacy_level:
-            firstPost.settings.privacy_level || 'PUBLIC_TO_EVERYONE',
+          privacy_level: firstPost.settings.privacy_level,
           ...(isPhoto
             ? {}
             : { disable_duet: !this.assetBoolean(firstPost.settings.duet) }),
@@ -834,6 +853,12 @@ export class TiktokProvider extends SocialAbstract implements SocialProvider {
       };
     }
 
+    // Media already hosted by Onpost must be pulled from its verified domain.
+    // Local device/file inputs retain the streamed upload path below.
+    if (/^https:\/\//.test(firstPost?.media?.[0]?.path || '')) {
+      return { source_info: { source: 'PULL_FROM_URL', video_url: firstPost.media[0].path } };
+    }
+
     const { chunkSize, totalChunkCount } = this.tiktokChunkPlan(videoSize || 0);
 
     return {
@@ -846,6 +871,43 @@ export class TiktokProvider extends SocialAbstract implements SocialProvider {
     };
   }
 
+  private async initializePull(url: string, options: RequestInit) {
+    const outcomeUnknown = () => new BadBody(this.identifier, '{}', '{}',
+      'TikTok may have accepted this upload, but its outcome is unknown. Check your TikTok profile or inbox before retrying. It will not be retried automatically.');
+    // Mark the mutation before sending it, rather than waiting for the periodic
+    // heartbeat. The workflow must not interpret an early worker loss as a task
+    // that never began. Direct API/unit calls have no activity context.
+    let activity: Context | undefined;
+    try { activity = Context.current(); } catch { /** Not in an activity. */ }
+    if (activity) {
+      setHeartbeatDetails('tiktok: pull initialization in flight');
+      activity.heartbeat('tiktok: pull initialization in flight');
+    }
+    let response: Response;
+    try {
+      // Accepting a pull can start publication immediately. Never replay this
+      // mutation through the shared HTTP or workflow unknown-error retry loops.
+      response = await fetch(url, { ...options, signal: AbortSignal.timeout(60_000) });
+    } catch {
+      throw outcomeUnknown();
+    }
+    if (response.status >= 500) throw outcomeUnknown();
+    if (response.status === 401) throw new RefreshToken(this.identifier, '{}', '{}');
+    let payload: any;
+    try { payload = await response.json(); } catch { throw outcomeUnknown(); }
+    if (!response.ok) {
+      const error = this.handleErrors(JSON.stringify(payload));
+      throw new BadBody(this.identifier, '{}', '{}', error?.value || 'TikTok rejected the upload. Please try again later.');
+    }
+    if (typeof payload?.data?.publish_id !== 'string' || !payload.data.publish_id) {
+      if (payload?.error?.code && payload.error.code !== 'ok') {
+        throw new BadBody(this.identifier, '{}', '{}', this.handleErrors(JSON.stringify(payload))?.value || 'TikTok rejected the upload.');
+      }
+      throw outcomeUnknown();
+    }
+    return payload;
+  }
+
   async postPending(
     id: string,
     accessToken: string,
@@ -856,22 +918,32 @@ export class TiktokProvider extends SocialAbstract implements SocialProvider {
     const isPhoto = !hasExtension(firstPost?.media?.[0]?.path, 'mp4');
     const videoPath = firstPost?.media?.[0]?.path!;
 
+    if (this.contentPostingMethod(firstPost) === 'DIRECT_POST') {
+      const creator = await this.creatorInfo(accessToken);
+      const settings = firstPost.settings;
+      if (!creator.privacyLevelOptions.includes(settings.privacy_level)) {
+        throw new BadBody(this.identifier, '{}', '{}', 'Choose a privacy level currently allowed by your TikTok account.');
+      }
+      if ((creator.commentDisabled && this.assetBoolean(settings.comment)) ||
+        (!isPhoto && ((creator.duetDisabled && this.assetBoolean(settings.duet)) ||
+          (creator.stitchDisabled && this.assetBoolean(settings.stitch))))) {
+        throw new BadBody(this.identifier, '{}', '{}', 'An interaction you allowed is disabled in your TikTok account. Update the post settings.');
+      }
+      if (settings.privacy_level === 'SELF_ONLY' && this.assetBoolean(settings.brand_content_toggle)) {
+        throw new BadBody(this.identifier, '{}', '{}', 'Branded content cannot use private visibility.');
+      }
+    }
+
     // For videos we only need the total size up front (HEAD / statSync) so we
     // can init the upload; the bytes themselves are streamed later, never fully
     // loaded into memory.
-    const videoSize = isPhoto
+    const videoSize = isPhoto || /^https:\/\//.test(videoPath)
       ? undefined
       : await this.mediaSize(videoPath, 'tiktok-error-upload');
 
-    const {
-      data: { publish_id, upload_url },
-    } = await (
-      await this.fetch(
-        `https://open.tiktokapis.com/v2/post/publish${this.postingMethod(
-          this.contentPostingMethod(firstPost),
-          isPhoto
-        )}`,
-        {
+    const source = this.buildTikokSourceInfoBody(firstPost, videoSize);
+    const initUrl = `https://open.tiktokapis.com/v2/post/publish${this.postingMethod(this.contentPostingMethod(firstPost), isPhoto)}`;
+    const initOptions = {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json; charset=UTF-8',
@@ -879,11 +951,12 @@ export class TiktokProvider extends SocialAbstract implements SocialProvider {
           },
           body: JSON.stringify({
             ...this.buildTikokPostInfoBody(firstPost),
-            ...this.buildTikokSourceInfoBody(firstPost, videoSize),
+            ...source,
           }),
-        }
-      )
-    ).json();
+        };
+    const { data: { publish_id, upload_url } } = source.source_info.source === 'PULL_FROM_URL'
+      ? await this.initializePull(initUrl, initOptions)
+      : await (await this.fetch(initUrl, initOptions)).json();
 
     // Videos: stream the bytes to the upload_url returned by the init call.
     if (!isPhoto && upload_url && videoSize) {
