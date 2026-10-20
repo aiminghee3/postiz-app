@@ -21,3 +21,5 @@ dist
 .git
 .github
 reports
+!LICENSE
+!ONPOST_CHANGES.md

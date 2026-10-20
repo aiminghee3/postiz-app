@@ -1,10 +1,11 @@
+// Onpost modification, 2026-10-20: service branding and open-source notices.
 export const dynamic = 'force-dynamic';
 import { AdminStatsComponent } from '@gitroom/frontend/components/admin/admin-stats.component';
 import { Metadata } from 'next';
 import { isGeneralServerSide } from '@gitroom/helpers/utils/is.general.server.side';
 
 export const metadata: Metadata = {
-  title: `${isGeneralServerSide() ? 'Postiz' : 'Gitroom'} Admin Stats`,
+  title: `${isGeneralServerSide() ? 'Onpost' : 'Gitroom'} Admin Stats`,
   description: '',
 };
 

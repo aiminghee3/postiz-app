@@ -1,3 +1,4 @@
+// Onpost modification, 2026-10-20: service branding and open-source notices.
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getCookieUrlFromDomain } from '@gitroom/helpers/subdomain/subdomain.management';
@@ -44,6 +45,8 @@ export async function proxy(request: NextRequest) {
   }
 
   if (
+    nextUrl.pathname === '/open-source' ||
+    nextUrl.pathname.startsWith('/open-source/') ||
     nextUrl.pathname.startsWith('/uploads/') ||
     nextUrl.pathname.startsWith('/p/') ||
     nextUrl.pathname.startsWith('/provider/') ||

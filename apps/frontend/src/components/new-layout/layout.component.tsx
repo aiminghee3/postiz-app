@@ -1,3 +1,4 @@
+// Onpost modification, 2026-10-20: service branding and open-source notices.
 'use client';
 
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
@@ -103,7 +104,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
             <ContinueProvider />
             <div
               className={clsx(
-                'flex flex-col min-h-screen min-w-screen text-newTextColor p-[12px] mobile:p-[8px] mobile:pb-[80px]',
+                'flex flex-col min-h-[calc(100dvh-56px)] min-w-screen text-newTextColor p-[12px] mobile:p-[8px] mobile:pb-[80px]',
                 jakartaSans.className
               )}
             >

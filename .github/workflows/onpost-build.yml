@@ -1,0 +1,71 @@
+name: Build Onpost release
+
+on:
+  push:
+    branches: [onpost/release]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: onpost-release-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'aiminghee3/postiz-app' && github.ref == 'refs/heads/onpost/release'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_NAME: ghcr.io/aiminghee3/onpost
+    steps:
+      - name: Check out the exact public release commit
+        run: |
+          git init source
+          cd source
+          git remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
+          git fetch --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+
+      - name: Build the branded frontend with the existing backend
+        working-directory: source
+        run: |
+          docker build -f Dockerfile.onpost \
+            --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
+            -t "$IMAGE_NAME:sha-$GITHUB_SHA" .
+
+      - name: Verify public branding and exact source access before publishing
+        run: |
+          set -euo pipefail
+          image="$IMAGE_NAME:sha-$GITHUB_SHA"
+          docker run --rm --entrypoint sh "$image" -c 'cmp /app/LICENSE /app/apps/frontend/public/open-source/LICENSE.txt'
+          docker run --detach --name onpost-preview --entrypoint sh \
+            -p 127.0.0.1:14200:4200 \
+            -e MAIN_URL=https://onpost.me -e FRONTEND_URL=https://onpost.me \
+            -e NEXT_PUBLIC_BACKEND_URL=https://onpost.me/api \
+            -e IS_GENERAL=true -e DISABLE_REGISTRATION=true \
+            "$image" -c 'cd /app/apps/frontend && pnpm exec next start -p 4200'
+          trap 'docker logs --tail=50 onpost-preview; docker rm -f onpost-preview' EXIT
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:14200/auth/login -o /tmp/onpost-login.html && break
+            sleep 2
+          done
+          rg -Fq 'Onpost Login' /tmp/onpost-login.html
+          curl -fsS http://127.0.0.1:14200/open-source -o /tmp/onpost-license.html
+          rg -Fq "$GITHUB_SHA" /tmp/onpost-license.html
+          rg -Fq 'Copyright (C) 2025 Nevo David' /tmp/onpost-license.html
+          curl -fsS http://127.0.0.1:14200/open-source/LICENSE.txt -o /tmp/onpost-LICENSE
+          cmp source/LICENSE /tmp/onpost-LICENSE
+
+      - name: Publish a versioned image to this fork's container registry
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE_NAME:sha-$GITHUB_SHA"
+          digest="$(docker image inspect "$IMAGE_NAME:sha-$GITHUB_SHA" --format '{{index .RepoDigests 0}}')"
+          printf 'Image: `%s`\nSource: https://github.com/%s/tree/%s\n' "$digest" "$GITHUB_REPOSITORY" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
