@@ -1,0 +1,14 @@
+# Onpost modification, 2026-10-20: rebuild only the branded frontend.
+# Preserve the exact production backend, dependency lock, database schema and worker.
+FROM ghcr.io/gitroomhq/postiz-app@sha256:d2b37802e96757729fdea2d3d71287f841c2b619faa1cb4c21dac07df657fde1
+ARG ONPOST_SOURCE_REF
+ENV ONPOST_SOURCE_REF=$ONPOST_SOURCE_REF
+ENV NEXT_PUBLIC_VERSION=onpost-2026.10.20
+WORKDIR /app
+COPY apps/frontend /app/apps/frontend
+COPY LICENSE ONPOST_CHANGES.md Dockerfile.onpost /app/
+RUN NODE_OPTIONS="--max-old-space-size=4096" NEXT_TELEMETRY_DISABLED=1 pnpm run build:frontend
+LABEL org.opencontainers.image.title="Onpost" \
+      org.opencontainers.image.source="https://github.com/aiminghee3/postiz-app" \
+      org.opencontainers.image.revision=$ONPOST_SOURCE_REF \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later"

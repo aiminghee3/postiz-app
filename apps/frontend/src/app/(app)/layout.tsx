@@ -1,3 +1,4 @@
+// Onpost modification, 2026-10-20: service branding and open-source notices.
 import { SentryComponent } from '@gitroom/frontend/components/layout/sentry.component';
 
 export const dynamic = 'force-dynamic';
@@ -6,6 +7,7 @@ import 'react-tooltip/dist/react-tooltip.css';
 import '@copilotkit/react-ui/styles.css';
 import LayoutContext from '@gitroom/frontend/components/layout/layout.context';
 import { ReactNode } from 'react';
+import { OpenSourceFooter } from '@gitroom/frontend/components/ui/open-source-footer';
 import { jakartaSans } from '@gitroom/frontend/fonts/plus-jakarta-sans/plus.jakarta.sans.font';
 import PlausibleProvider from 'next-plausible';
 import clsx from 'clsx';
@@ -33,11 +35,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <html>
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/onpost-icon.svg" type="image/svg+xml" />
         {!!process.env.DATAFAST_WEBSITE_ID && (
           <Script
             data-website-id={process.env.DATAFAST_WEBSITE_ID}
-            data-domain="postiz.com"
+            data-domain="onpost.me"
             src="https://datafa.st/js/script.js"
             strategy="afterInteractive"
           />
@@ -45,7 +47,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </head>
       <ChangeDirClient />
       <body
-        className={clsx(jakartaSans.className, 'dark text-primary !bg-primary')}
+        className={clsx(jakartaSans.className, 'dark text-primary !bg-primary flex min-h-screen flex-col')}
       >
         <VariableContextComponent
           storageProvider={
@@ -101,7 +103,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <FacebookComponent />
             <GoogleTagManagerComponent gtmId={process.env.NEXT_PUBLIC_GTM_ID} />
             <Plausible
-              domain={!!process.env.IS_GENERAL ? 'postiz.com' : 'gitroom.com'}
+              domain="onpost.me"
             >
               <LayoutContext>
                 <UtmSaver />
@@ -110,6 +112,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </Plausible>
           </SentryComponent>
         </VariableContextComponent>
+        <OpenSourceFooter />
       </body>
     </html>
   );

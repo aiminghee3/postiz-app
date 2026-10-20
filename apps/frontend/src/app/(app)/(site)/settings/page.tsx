@@ -1,9 +1,10 @@
+// Onpost modification, 2026-10-20: service branding and open-source notices.
 import { SettingsPopup } from '@gitroom/frontend/components/layout/settings.component';
 export const dynamic = 'force-dynamic';
 import { Metadata } from 'next';
 import { isGeneralServerSide } from '@gitroom/helpers/utils/is.general.server.side';
 export const metadata: Metadata = {
-  title: `${isGeneralServerSide() ? 'Postiz' : 'Gitroom'} Settings`,
+  title: `${isGeneralServerSide() ? 'Onpost' : 'Gitroom'} Settings`,
   description: '',
 };
 export default async function Index(props: {

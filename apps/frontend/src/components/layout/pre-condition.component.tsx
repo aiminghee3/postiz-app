@@ -1,3 +1,4 @@
+// Onpost modification, 2026-10-20: service branding and open-source notices.
 import React, { FC, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ModalWrapperComponent } from '@gitroom/frontend/components/new-launch/modal.wrapper.component';
@@ -9,7 +10,7 @@ export const PreConditionComponentModal: FC = () => {
   return (
     <div className="flex flex-col gap-[16px]">
       <div className="whitespace-pre-line">
-        This social channel was connected previously to another Postiz account.
+        This social channel was connected previously to another Onpost account.
         {'\n'}
         To continue, please fast-track your trial for an immediate charge.{'\n'}
         {'\n'}
@@ -22,7 +23,9 @@ export const PreConditionComponentModal: FC = () => {
         >
           Fast track - Charge me now
         </Button>
-        <Button onClick={modal.closeCurrent} secondary={true}>Cancel</Button>
+        <Button onClick={modal.closeCurrent} secondary={true}>
+          Cancel
+        </Button>
       </div>
     </div>
   );

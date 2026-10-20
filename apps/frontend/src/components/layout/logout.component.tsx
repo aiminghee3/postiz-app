@@ -1,3 +1,4 @@
+// Onpost modification, 2026-10-20: service branding and open-source notices.
 'use client';
 
 import React, { FC, useCallback } from 'react';
@@ -44,7 +45,7 @@ export const LogoutComponent: FC<{ isIcon?: boolean }> = ({ isIcon }) => {
             data-tooltip-id="tooltip"
             data-tooltip-content={`
             ${t('logout_from', 'Logout from')}${' '}
-            ${isGeneral ? ' Postiz' : ' Gitroom'}
+            ${isGeneral ? ' Onpost' : ' Gitroom'}
             `}
           >
             <path
@@ -55,7 +56,7 @@ export const LogoutComponent: FC<{ isIcon?: boolean }> = ({ isIcon }) => {
         ) : (
           <span className="text-red-400">
             {t('logout_from', 'Logout from')}
-            {isGeneral ? ' Postiz' : ' Gitroom'}
+            {isGeneral ? ' Onpost' : ' Gitroom'}
           </span>
         )}
       </div>
