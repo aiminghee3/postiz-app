@@ -31,17 +31,32 @@ jobs:
           git fetch --depth=1 origin "$GITHUB_SHA"
           git checkout --detach FETCH_HEAD
 
-      - name: Build the branded frontend with the existing backend
+      - name: Authenticate to this fork's container registry
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build and push the branded image directly to the registry
+        id: build
         working-directory: source
         run: |
-          docker build -f Dockerfile.onpost \
+          docker buildx build --push \
+            --platform linux/amd64 \
             --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
-            -t "$IMAGE_NAME:sha-$GITHUB_SHA" .
+            -t "$IMAGE_NAME:sha-$GITHUB_SHA" \
+            --metadata-file /tmp/onpost-image-metadata.json \
+            -f Dockerfile.onpost .
+          digest="$(jq -r '.["containerimage.digest"]' /tmp/onpost-image-metadata.json)"
+          test "${#digest}" -eq 71
+          printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
 
-      - name: Verify public branding and exact source access before publishing
+      - name: Verify public branding and exact source access
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           set -euo pipefail
-          image="$IMAGE_NAME:sha-$GITHUB_SHA"
+          image="$IMAGE_NAME@$IMAGE_DIGEST"
+          docker pull "$image"
           docker run --rm --entrypoint sh "$image" -c 'cmp /app/LICENSE /app/apps/frontend/public/open-source/LICENSE.txt'
           docker run --detach --name onpost-preview --entrypoint sh \
             -p 127.0.0.1:14200:4200 \
@@ -79,11 +94,6 @@ jobs:
           curl -fsS http://127.0.0.1:14200/open-source/LICENSE.txt -o /tmp/onpost-LICENSE
           cmp source/LICENSE /tmp/onpost-LICENSE
 
-      - name: Publish a versioned image to this fork's container registry
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Record the verified immutable image
         run: |
-          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
-          docker push "$IMAGE_NAME:sha-$GITHUB_SHA"
-          digest="$(docker image inspect "$IMAGE_NAME:sha-$GITHUB_SHA" --format '{{index .RepoDigests 0}}')"
-          printf 'Image: `%s`\nSource: https://github.com/%s/tree/%s\n' "$digest" "$GITHUB_REPOSITORY" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Image: `%s@%s`\nSource: https://github.com/%s/tree/%s\n' "$IMAGE_NAME" "${{ steps.build.outputs.digest }}" "$GITHUB_REPOSITORY" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
