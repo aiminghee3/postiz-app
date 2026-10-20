@@ -54,12 +54,12 @@ jobs:
             curl -fsS http://127.0.0.1:14200/auth/login -o /tmp/onpost-login.html && break
             sleep 2
           done
-          rg -Fq 'Onpost Login' /tmp/onpost-login.html
+          grep -Fq 'Onpost Login' /tmp/onpost-login.html
           curl -fsS http://127.0.0.1:14200/open-source -o /tmp/onpost-license.html
-          rg -Fq "$GITHUB_SHA" /tmp/onpost-license.html
-          rg -Fq 'Copyright (C) 2025 Nevo David' /tmp/onpost-license.html
+          grep -Fq "$GITHUB_SHA" /tmp/onpost-license.html
+          grep -Fq 'Copyright (C) 2025 Nevo David' /tmp/onpost-license.html
           curl -fsS -H 'Cookie: auth=source-page-access-check' http://127.0.0.1:14200/open-source -o /tmp/onpost-authenticated-license.html
-          rg -Fq "$GITHUB_SHA" /tmp/onpost-authenticated-license.html
+          grep -Fq "$GITHUB_SHA" /tmp/onpost-authenticated-license.html
           curl -fsS http://127.0.0.1:14200/open-source/LICENSE.txt -o /tmp/onpost-LICENSE
           cmp source/LICENSE /tmp/onpost-LICENSE
 
