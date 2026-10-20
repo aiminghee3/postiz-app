@@ -46,7 +46,8 @@ jobs:
         id: build
         working-directory: source
         run: |
-          docker buildx build --progress=plain --push \
+          docker buildx build --progress=plain \
+            --output=type=registry,compression=gzip,compression-level=1 \
             --platform linux/amd64 \
             --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
             -t "$IMAGE_NAME:sha-$GITHUB_SHA" \
