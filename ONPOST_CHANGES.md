@@ -10,7 +10,11 @@ Postiz: Copyright (C) 2025 Nevo David.
 - Remove upstream customer-count claims and testimonials from the Onpost login.
 - Add visible attribution, an accessible public license page, the unchanged license
   text, and links to the exact deployed source commit and downloadable archive.
-- Preserve the production v2.25.1 backend, Prisma schema, workers and dependencies.
+- Preserve the production v2.25.1 Prisma schema, workflow sources and dependencies.
+- Reduce YouTube OAuth requests to profile, read-only channel data, video upload
+  and read-only analytics access. Remove unused email/CMS partner access and broad
+  YouTube scopes. Rebuild the API and worker from the pinned base with only this
+  provider source changed, and verify their compiled authorization URLs.
 - Add a Korean public landing page with channel previews, scheduling and Instagram
   comment-to-DM explanations. Preserve signed-in dashboard and invitation routing.
 - Link landing calls to action to the existing login and disclose the current
@@ -41,6 +45,7 @@ docker build -f Dockerfile.onpost --build-arg ONPOST_SOURCE_REF="$(git rev-parse
 Use the upstream Docker Compose installation with this image, your domain, and
 your own private credentials. The original installation configuration is at
 https://github.com/gitroomhq/postiz-docker-compose . Do not publish credentials or
-user data. `Dockerfile.onpost` intentionally rebuilds only the frontend to keep the
-existing backend and worker version unchanged. Future backend upgrades require
-their own migration and deployment checks.
+user data. `Dockerfile.onpost` rebuilds the frontend and the API/worker from the
+pinned base. The only backend source overlay is the minimal YouTube OAuth scope
+change; existing workflow sources, dependency lock and database schema are kept.
+Future backend upgrades require their own migration and deployment checks.
