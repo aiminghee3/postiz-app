@@ -13,6 +13,7 @@ export interface MobileTopBarAction {
   label: string;
   variant: 'primary' | 'secondary' | 'tertiary';
   onClick: () => void;
+  disabled?: boolean;
 }
 
 const actionColors = {
@@ -46,7 +47,7 @@ export const MobileTopBar: FC<{
       <div className="flex-1 min-w-0 flex">{children}</div>
       <div ref={ref} className="relative">
         <button
-          disabled={disabled}
+          disabled={disabled || (single && actions[0].disabled)}
           onClick={() => (single ? actions[0].onClick() : setOpen(!open))}
           className={clsx(
             'relative min-w-[92px] h-[34px] rounded-[6px] flex justify-center items-center gap-[8px] text-[13px] font-[600] bg-btnPrimary text-white disabled:bg-btnSimple disabled:text-textItemBlur disabled:cursor-not-allowed',
@@ -74,12 +75,13 @@ export const MobileTopBar: FC<{
             {actions.map((action, index) => (
               <button
                 key={index}
+                disabled={disabled || action.disabled}
                 onClick={() => {
                   setOpen(false);
                   action.onClick();
                 }}
                 className={clsx(
-                  'h-[34px] rounded-[6px] text-[13px] font-[600]',
+                  'h-[34px] rounded-[6px] text-[13px] font-[600] disabled:opacity-50 disabled:cursor-not-allowed',
                   actionColors[action.variant]
                 )}
               >
