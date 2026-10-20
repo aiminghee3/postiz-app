@@ -609,7 +609,7 @@
   "select_channels": "选择频道",
   "start_a_new_chat": "开始新聊天",
   "your_assistant": "你的助手",
-  "agent_welcome_message": "你好，我是你的 Postiz 智能助手 🙌🏻。\n\n我可以帮你安排单个或多个频道的帖子，并生成图片和视频。\n\n你可以在左侧菜单中选择你想使用的频道。\n\n你可以在右侧菜单查看你之前的对话记录。\n\n你也可以将我用作 MCP 服务器，请前往设置 >> 智能助手 / 开发者。",
+  "agent_welcome_message": "你好，我是你的 Onpost 智能助手 🙌🏻。\n\n我可以帮你安排单个或多个频道的帖子，并生成图片和视频。\n\n你可以在左侧菜单中选择你想使用的频道。\n\n你可以在右侧菜单查看你之前的对话记录。\n\n你也可以将我用作 MCP 服务器，请前往设置 >> 智能助手 / 开发者。",
   "last_github_trending": "最新 Github 趋势",
   "next_predicted_github_trending": "下一个预测的 Github 趋势",
   "repository": "仓库",

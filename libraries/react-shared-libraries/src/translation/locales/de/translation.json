@@ -609,7 +609,7 @@
   "select_channels": "Kanäle auswählen",
   "start_a_new_chat": "Neuen Chat starten",
   "your_assistant": "Ihr Assistent",
-  "agent_welcome_message": "Hallo, ich bin dein Postiz-Agent 🙌🏻.\n\nIch kann einen oder mehrere Beiträge gleichzeitig für verschiedene Kanäle planen und Bilder sowie Videos generieren.\n\nDu kannst die gewünschten Kanäle im linken Menü auswählen.\n\nDeine bisherigen Unterhaltungen findest du im rechten Menü.\n\nDu kannst mich außerdem als MCP-Server nutzen. Schau dazu unter Einstellungen >> Agents / Dev.",
+  "agent_welcome_message": "Hallo, ich bin dein Onpost-Agent 🙌🏻.\n\nIch kann einen oder mehrere Beiträge gleichzeitig für verschiedene Kanäle planen und Bilder sowie Videos generieren.\n\nDu kannst die gewünschten Kanäle im linken Menü auswählen.\n\nDeine bisherigen Unterhaltungen findest du im rechten Menü.\n\nDu kannst mich außerdem als MCP-Server nutzen. Schau dazu unter Einstellungen >> Agents / Dev.",
   "last_github_trending": "Letzte Github-Trends",
   "next_predicted_github_trending": "Nächste vorhergesagte Github-Trends",
   "repository": "Repository",
