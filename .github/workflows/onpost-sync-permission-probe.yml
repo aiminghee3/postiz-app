@@ -30,6 +30,6 @@ jobs:
           trap 'gh api --method PATCH "repos/$PROBE_REPOSITORY/pulls/$pr_number" -f state=closed >/dev/null' EXIT
           gh api --method POST "repos/$PROBE_REPOSITORY/merges" \
             -f base=onpost/permission-probe -f head="$PROBE_SHA" >/dev/null
-          status="$(gh api "repos/$PROBE_REPOSITORY/compare/$PROBE_SHA...onpost/permission-probe" --jq .status)"
-          test "$status" = identical
+          result="$(gh api "repos/$PROBE_REPOSITORY/compare/$PROBE_SHA...onpost/permission-probe" --jq '[.behind_by, (.files | length)] | @tsv')"
+          test "$result" = $'0\t0'
           echo 'Cross-fork PR creation and workflow-file merge succeeded with GITHUB_TOKEN.' >> "$GITHUB_STEP_SUMMARY"
