@@ -6,7 +6,7 @@ const questions = [
   {
     question: '어떤 SNS를 연결할 수 있나요?',
     answer:
-      'Instagram, Threads, YouTube의 콘텐츠를 준비하고 예약할 수 있어요. 채널마다 연결 조건과 지원하는 게시물 형식이 다르며, 계정 연결 화면에서 확인할 수 있어요.',
+      'Instagram, Threads, YouTube의 콘텐츠를 준비하고 예약할 수 있어요. TikTok은 현재 승인된 Sandbox 테스트 계정만 연결할 수 있어요. 채널마다 연결 조건과 지원하는 게시물 형식이 다르며, 계정 연결 화면에서 확인할 수 있어요.',
   },
   {
     question: '같은 콘텐츠를 채널마다 다르게 올릴 수 있나요?',
@@ -56,8 +56,14 @@ export function OnpostLanding() {
           <div className={styles.heroCopy}>
             <p className={styles.intro}>콘텐츠 준비부터 예약 발행까지</p>
             <h1 id="hero-title">
-              <span>올릴 콘텐츠는 한 번에.</span>{' '}
-              <span>발행은 원하는 시간에.</span>
+              <span>
+                올릴 콘텐츠는{' '}
+                <span className={styles.keepTogether}>한 번에.</span>
+              </span>{' '}
+              <span>
+                발행은 원하는{' '}
+                <span className={styles.keepTogether}>시간에.</span>
+              </span>
             </h1>
             <p className={styles.description}>
               SNS마다 오가며 올리던 콘텐츠.
@@ -85,6 +91,9 @@ export function OnpostLanding() {
             <span>Instagram</span>
             <span>Threads</span>
             <span>YouTube</span>
+            <span>
+              TikTok <small>테스트</small>
+            </span>
           </div>
         </section>
 
