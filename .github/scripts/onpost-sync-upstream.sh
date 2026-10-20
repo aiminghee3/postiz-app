@@ -104,6 +104,7 @@ Merging this pull request does not deploy the running Onpost service.
 EOF
   pr_url="$(gh api --method POST "repos/$SYNC_REPOSITORY/pulls" \
     -f base="$target_branch" -f head="gitroomhq:$source_branch" -f head_repo=postiz-app \
+    -F maintainer_can_modify=false \
     -f title="Sync upstream main (${upstream_sha:0:12}): resolve conflicts" \
     -F "body=@$body_file" --jq .html_url)"
 fi

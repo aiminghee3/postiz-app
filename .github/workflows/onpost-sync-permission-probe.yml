@@ -24,6 +24,7 @@ jobs:
           set -euo pipefail
           pr_number="$(gh api --method POST "repos/$PROBE_REPOSITORY/pulls" \
             -f base=onpost/permission-probe -f head=gitroomhq:main -f head_repo=postiz-app \
+            -F maintainer_can_modify=false \
             -f title='Temporary upstream sync permission check' \
             -f body='Temporary verification in this fork only. Confirms the scoped Actions token can open an upstream update PR. The check merges upstream changes, including workflow files, into an expendable probe branch. This PR is automatically closed; no deployment occurs.' --jq .number)"
           trap 'gh api --method PATCH "repos/$PROBE_REPOSITORY/pulls/$pr_number" -f state=closed >/dev/null' EXIT

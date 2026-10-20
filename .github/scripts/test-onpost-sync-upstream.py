@@ -126,6 +126,7 @@ else:sys.exit(2)
         self.assertIn('# QA\n', created[0]['body'])
         self.assertIn('app.txt', created[0]['body'])
         self.assertIn('head=gitroomhq:main', created[0]['args'])
+        self.assertIn('maintainer_can_modify=false', created[0]['args'])
 
     def test_rerun_reuses_existing_conflict_pr(self):
         self.commit('app.txt', 'ours\n')
