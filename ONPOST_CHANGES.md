@@ -17,6 +17,8 @@ Postiz: Copyright (C) 2025 Nevo David.
   approved-account and operator-workspace availability instead of obsolete plans.
 - Add public service terms and privacy disclosures with the operator's supplied
   business identity, platform permission revocation and deletion contact details.
+- Disclose browser-local landing/referral storage and the deployment's disabled
+  external analytics, advertising pixels and session replay.
 - Backport upstream font-build fix `ea9c820160dcfdbf455b54da2f61802ed1f9bbd8`:
   self-host Plus Jakarta Sans with its SIL OFL license instead of build-time Google
   font loading, which failed in CI's Turbopack font resolver.
