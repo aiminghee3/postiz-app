@@ -1,3 +1,4 @@
+// Onpost modification, 2026-10-20: visible service branding.
 'use client';
 
 import { FC, Fragment, useCallback } from 'react';
@@ -47,7 +48,10 @@ export const ApprovedAppsComponent: FC = () => {
           );
           mutate();
         } catch {
-          toaster.show(t('failed_to_revoke', 'Failed to revoke access'), 'warning');
+          toaster.show(
+            t('failed_to_revoke', 'Failed to revoke access'),
+            'warning'
+          );
         }
       }
     },
@@ -63,7 +67,7 @@ export const ApprovedAppsComponent: FC = () => {
       <div className="text-customColor18">
         {t(
           'apps_you_have_authorized',
-          'Applications you have authorized to access your Postiz account.'
+          'Applications you have authorized to access your Onpost account.'
         )}
       </div>
 
