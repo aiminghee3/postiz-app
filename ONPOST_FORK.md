@@ -34,6 +34,12 @@ for this fork (some upstream build workflows target the upstream's image registr
 GitHub may disable scheduled workflows after 60 days of repository inactivity; if
 that happens, enable **Onpost upstream sync** again on the Actions page.
 
+Initial verification (2026-10-20): all six disposable Git tests passed. A temporary
+Actions run also verified that `GITHUB_TOKEN` can open a cross-fork update PR and
+merge an actual upstream workflow-file change without storing a personal token:
+https://github.com/aiminghee3/postiz-app/actions/runs/39382712212
+The temporary verification workflow and branch were removed afterward.
+
 ## Local checkout
 
 The initial checkout is `/Users/admin/orca/projects/postiz-app`:
