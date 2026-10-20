@@ -1,0 +1,42 @@
+name: Onpost upstream sync
+
+on:
+  schedule:
+    # 06:17 Asia/Seoul; GitHub schedules use UTC.
+    - cron: '17 21 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: onpost-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'aiminghee3/postiz-app'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Clone this fork with GitHub's temporary token
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh auth setup-git
+          git clone --no-tags --filter=blob:none --branch main \
+            "https://github.com/$GITHUB_REPOSITORY.git" fork
+
+      - name: Verify synchronization preserves custom changes
+        working-directory: fork
+        run: python3 .github/scripts/test-onpost-sync-upstream.py -v
+
+      - name: Merge upstream or open a conflict pull request
+        working-directory: fork
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SYNC_REPOSITORY: ${{ github.repository }}
+        run: bash .github/scripts/onpost-sync-upstream.sh
