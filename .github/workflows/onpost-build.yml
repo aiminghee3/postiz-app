@@ -31,6 +31,12 @@ jobs:
           git fetch --depth=1 origin "$GITHUB_SHA"
           git checkout --detach FETCH_HEAD
 
+      - name: Reclaim runner disk for the application image
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /usr/local/share/powershell /opt/ghc
+          df -h /
+          df -i /
+
       - name: Authenticate to this fork's container registry
         env:
           GH_TOKEN: ${{ github.token }}
@@ -40,7 +46,7 @@ jobs:
         id: build
         working-directory: source
         run: |
-          docker buildx build --push \
+          docker buildx build --progress=plain --push \
             --platform linux/amd64 \
             --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
             -t "$IMAGE_NAME:sha-$GITHUB_SHA" \
