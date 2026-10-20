@@ -55,6 +55,22 @@ jobs:
             sleep 2
           done
           grep -Fq 'Onpost Login' /tmp/onpost-login.html
+          curl -fsS http://127.0.0.1:14200/ -o /tmp/onpost-home.html
+          grep -Fq 'SNS 콘텐츠 준비부터 예약 발행까지' /tmp/onpost-home.html
+          grep -Fq '댓글 자동 DM' /tmp/onpost-home.html
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:14200/)" = 200
+          curl -sS -D /tmp/onpost-dashboard-headers -o /dev/null -H 'Cookie: auth=routing-check-only' http://127.0.0.1:14200/
+          grep -Eiq '^location: (https?://[^/]+)?/launches' /tmp/onpost-dashboard-headers
+          curl -sS -D /tmp/onpost-protected-headers -o /dev/null http://127.0.0.1:14200/launches
+          grep -Eiq '^location: (https?://[^/]+)?/auth' /tmp/onpost-protected-headers
+          curl -sS -D /tmp/onpost-invitation-headers -o /dev/null -H 'Cookie: org=invitation-routing-check' http://127.0.0.1:14200/
+          grep -Eiq '^location: (https?://[^/]+)?/auth' /tmp/onpost-invitation-headers
+          curl -sS -D /tmp/onpost-register-headers -o /dev/null http://127.0.0.1:14200/auth/register
+          grep -Eiq '^location: (https?://[^/]+)?/auth/login' /tmp/onpost-register-headers
+          for policy in privacy terms; do
+            curl -fsS "http://127.0.0.1:14200/$policy" -o "/tmp/onpost-$policy.html"
+            grep -Fq '303-19-95204' "/tmp/onpost-$policy.html"
+          done
           curl -fsS http://127.0.0.1:14200/open-source -o /tmp/onpost-license.html
           grep -Fq "$GITHUB_SHA" /tmp/onpost-license.html
           grep -Fq 'Copyright (C) 2025 Nevo David' /tmp/onpost-license.html

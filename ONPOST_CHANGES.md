@@ -11,6 +11,12 @@ Postiz: Copyright (C) 2025 Nevo David.
 - Add visible attribution, an accessible public license page, the unchanged license
   text, and links to the exact deployed source commit and downloadable archive.
 - Preserve the production v2.25.1 backend, Prisma schema, workers and dependencies.
+- Add a Korean public landing page with channel previews, scheduling and Instagram
+  comment-to-DM explanations. Preserve signed-in dashboard and invitation routing.
+- Link landing calls to action to the existing login and disclose the current
+  approved-account and operator-workspace availability instead of obsolete plans.
+- Add public service terms and privacy disclosures with the operator's supplied
+  business identity, platform permission revocation and deletion contact details.
 
 ## Reproduce this deployment
 

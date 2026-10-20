@@ -45,6 +45,8 @@ export async function proxy(request: NextRequest) {
   }
 
   if (
+    nextUrl.pathname === '/privacy' ||
+    nextUrl.pathname === '/terms' ||
     nextUrl.pathname === '/open-source' ||
     nextUrl.pathname.startsWith('/open-source/') ||
     nextUrl.pathname.startsWith('/uploads/') ||
@@ -94,6 +96,15 @@ export async function proxy(request: NextRequest) {
 
   const org = nextUrl.searchParams.get('org');
   const url = new URL(nextUrl).search;
+  // Onpost modification, 2026-10-20: public home; keep invitations and login redirects.
+  if (
+    nextUrl.pathname === '/' &&
+    !authCookie &&
+    !org &&
+    !request.cookies.has('org')
+  ) {
+    return topResponse;
+  }
   if (!nextUrl.pathname.startsWith('/auth') && !authCookie) {
     const providers = ['google', 'settings'];
     const findIndex = providers.find((p) => nextUrl.href.indexOf(p) > -1);
