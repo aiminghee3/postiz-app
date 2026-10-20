@@ -1,6 +1,8 @@
 # Onpost modification, 2026-10-20: branding and reviewed platform access changes.
 # Preserve the production dependency lock, database schema and workflow sources.
-FROM ghcr.io/gitroomhq/postiz-app@sha256:d2b37802e96757729fdea2d3d71287f841c2b619faa1cb4c21dac07df657fde1
+# Reuse the exact deployed Onpost image so the registry can retain its large
+# application layers and only receive this release's rebuilt layers.
+FROM ghcr.io/aiminghee3/onpost@sha256:aa0983f74485edca049b0bb10eed54a78336b6496e978db7171a7484b81f0df8
 ARG ONPOST_SOURCE_REF
 RUN test "${#ONPOST_SOURCE_REF}" -eq 40 && printf '%s' "$ONPOST_SOURCE_REF" | grep -Eq '^[a-f0-9]{40}$'
 ENV ONPOST_SOURCE_REF=$ONPOST_SOURCE_REF
