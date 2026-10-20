@@ -48,8 +48,8 @@ jobs:
         run: |
           build_log=/tmp/onpost-buildx.log
           : > "$build_log"
-          docker buildx build --progress=plain \
-            --output=type=registry,compression=gzip,compression-level=1 \
+          docker buildx build --progress=tty \
+            --output=type=registry,compression=zstd,compression-level=1,oci-mediatypes=true \
             --platform linux/amd64 \
             --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
             -t "$IMAGE_NAME:sha-$GITHUB_SHA" \
