@@ -48,13 +48,13 @@ jobs:
         run: |
           build_log=/tmp/onpost-buildx.log
           : > "$build_log"
-          docker buildx build --progress=tty \
+          script -q -e -c 'docker buildx build --progress=tty \
             --output=type=registry,compression=zstd,compression-level=1,oci-mediatypes=true \
             --platform linux/amd64 \
             --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
             -t "$IMAGE_NAME:sha-$GITHUB_SHA" \
             --metadata-file /tmp/onpost-image-metadata.json \
-            -f Dockerfile.onpost . > "$build_log" 2>&1 &
+            -f Dockerfile.onpost .' /dev/null > "$build_log" 2>&1 &
           build_pid=$!
           elapsed=0
           last_line=0
@@ -73,10 +73,7 @@ jobs:
           wait "$build_pid"
           build_status=$?
           set -e
-          current_line="$(wc -l < "$build_log")"
-          if [ "$current_line" -gt "$last_line" ]; then
-            sed -n "$((last_line + 1)),$((current_line))p" "$build_log"
-          fi
+          tr '\r' '\n' < "$build_log" | tail -n 80
           test "$build_status" -eq 0
           digest="$(jq -r '.["containerimage.digest"]' /tmp/onpost-image-metadata.json)"
           test "${#digest}" -eq 71
