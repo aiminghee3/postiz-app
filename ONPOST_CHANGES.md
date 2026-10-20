@@ -11,6 +11,9 @@ Postiz: Copyright (C) 2025 Nevo David.
 - Add visible attribution, an accessible public license page, the unchanged license
   text, and links to the exact deployed source commit and downloadable archive.
 - Preserve the production v2.25.1 backend, Prisma schema, workers and dependencies.
+- Backport upstream font-build fix `ea9c820160dcfdbf455b54da2f61802ed1f9bbd8`:
+  self-host Plus Jakarta Sans with its SIL OFL license instead of build-time Google
+  font loading, which failed in CI's Turbopack font resolver.
 
 ## Reproduce this deployment
 
