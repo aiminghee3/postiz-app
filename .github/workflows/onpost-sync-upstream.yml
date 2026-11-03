@@ -27,7 +27,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh auth setup-git
-          git clone --no-tags --filter=blob:none --branch main \
+          git clone --no-tags --branch main \
             "https://github.com/$GITHUB_REPOSITORY.git" fork
 
       - name: Verify synchronization preserves custom changes
