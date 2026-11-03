@@ -4,9 +4,11 @@ import styles from './onpost-landing.module.css';
 
 export function LegalPage({
   title,
+  date = '2026년 10월 20일',
   children,
 }: {
   title: string;
+  date?: string;
   children: ReactNode;
 }) {
   return (
@@ -22,7 +24,7 @@ export function LegalPage({
       </header>
       <main className={styles.legal}>
         <h1>{title}</h1>
-        <p className={styles.legalDate}>시행일: 2026년 10월 20일</p>
+        <p className={styles.legalDate}>시행일: {date}</p>
         {children}
         <section>
           <h2>운영자 및 문의</h2>
