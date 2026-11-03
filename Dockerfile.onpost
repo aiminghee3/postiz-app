@@ -1,8 +1,9 @@
 # Onpost modification, 2026-10-20: branding and reviewed platform access changes.
 # Preserve the production dependency lock, database schema and workflow sources.
 # Reuse the exact deployed Onpost image so the registry can retain its large
-# application layers and only receive this release's rebuilt layers.
-FROM ghcr.io/aiminghee3/onpost@sha256:aa0983f74485edca049b0bb10eed54a78336b6496e978db7171a7484b81f0df8
+# application layers. Builds run in a separate stage and only their outputs are
+# copied into the release, keeping exported layers small enough for CI runners.
+FROM ghcr.io/aiminghee3/onpost@sha256:aa0983f74485edca049b0bb10eed54a78336b6496e978db7171a7484b81f0df8 AS build
 ARG ONPOST_SOURCE_REF
 RUN test "${#ONPOST_SOURCE_REF}" -eq 40 && printf '%s' "$ONPOST_SOURCE_REF" | grep -Eq '^[a-f0-9]{40}$'
 ENV ONPOST_SOURCE_REF=$ONPOST_SOURCE_REF
@@ -20,6 +21,21 @@ RUN node var/onpost/verify-publish-blockers.cjs
 COPY libraries/react-shared-libraries/src/translation/locales /app/libraries/react-shared-libraries/src/translation/locales
 COPY LICENSE ONPOST_CHANGES.md Dockerfile.onpost /app/
 RUN NODE_OPTIONS="--max-old-space-size=4096" NEXT_TELEMETRY_DISABLED=1 pnpm run build:frontend && rm -rf /app/apps/frontend/.next/cache
+FROM ghcr.io/aiminghee3/onpost@sha256:aa0983f74485edca049b0bb10eed54a78336b6496e978db7171a7484b81f0df8
+ARG ONPOST_SOURCE_REF
+ENV ONPOST_SOURCE_REF=$ONPOST_SOURCE_REF
+ENV NEXT_PUBLIC_VERSION=onpost-2026.10.20
+WORKDIR /app
+COPY libraries/nestjs-libraries/src/integrations/social/youtube.provider.ts /app/libraries/nestjs-libraries/src/integrations/social/youtube.provider.ts
+COPY libraries/nestjs-libraries/src/integrations/social/tiktok.provider.ts /app/libraries/nestjs-libraries/src/integrations/social/tiktok.provider.ts
+COPY libraries/nestjs-libraries/src/dtos/posts/providers-settings/tiktok.dto.ts /app/libraries/nestjs-libraries/src/dtos/posts/providers-settings/tiktok.dto.ts
+COPY libraries/react-shared-libraries/src/translation/locales /app/libraries/react-shared-libraries/src/translation/locales
+COPY var/onpost /app/var/onpost
+COPY apps/frontend /app/apps/frontend
+COPY LICENSE ONPOST_CHANGES.md Dockerfile.onpost /app/
+COPY --from=build /app/apps/backend/dist /app/apps/backend/dist
+COPY --from=build /app/apps/orchestrator/dist /app/apps/orchestrator/dist
+COPY --from=build /app/apps/frontend/.next /app/apps/frontend/.next
 LABEL org.opencontainers.image.title="Onpost" \
       org.opencontainers.image.source="https://github.com/aiminghee3/postiz-app" \
       org.opencontainers.image.revision=$ONPOST_SOURCE_REF \
