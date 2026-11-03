@@ -143,12 +143,7 @@ export function Login() {
                     {t('sign_in_1', 'Sign in')}
                   </Button>
                 </div>
-                <p className="mt-4 text-sm">
-                  {t('don_t_have_an_account', "Don't Have An Account?")}&nbsp;
-                  <Link href="/auth" className="underline cursor-pointer">
-                    {t('sign_up', 'Sign Up')}
-                  </Link>
-                </p>
+                {/* Onpost modification, 2026-11-03: registration is invite-only. */}
                 <p className="mt-4 text-sm">
                   <Link
                     href="/auth/forgot"
