@@ -620,7 +620,6 @@
   "email_address": "Dirección de correo electrónico",
   "email_already_exists": "El correo electrónico ya existe",
   "google": "Google",
-  "apple": "Manzana",
   "apple": "Apple",
   "farcaster": "Farcaster",
   "farcaster_approve_instructions": "Escanee el código QR con su teléfono o abra el enlace en su teléfono, luego apruebe Postiz en la app de Farcaster.",
@@ -890,10 +889,11 @@
   "finish_trial_failed_description": "No pudimos cobrar en tu tarjeta. Por favor, inténtalo de nuevo.",
   "try_again": "Intentar de nuevo",
   "finish_trial": "Finalizar prueba",
-  "finish_trial_confirmation": "Finalizar la prueba cobrará tu plan inmediatamente, ¿estás seguro?",
-  "finish_trial_charge_me_now": "Finalizar la prueba, cobrarme ahora",
+  "finish_trial_confirmation": "Finalizar la prueba hace que se cobre hoy el primer pago de tu plan en lugar de al finalizar la prueba. No se añade ningún cargo extra. ¿Continuar?",
+  "finish_trial_charge_me_now": "Finalizar prueba y pagar ahora",
   "trial": "Prueba",
   "thumbnails_and_alt_text": "Miniaturas y texto alternativo",
-  "media_settings_section_description": "Haz clic en un elemento multimedia para establecer su texto alternativo, o su miniatura si es un video. Las miniaturas se aplican a los videos de la publicación principal.",
+  "media_settings_section_description": "Haz clic en un elemento multimedia para establecer su texto alternativo, o su miniatura si es un video.",
+  "media_settings_section_tooltip": "Las miniaturas se aplican a los videos en la publicación principal y se envían a todos los canales que las admiten. YouTube puede ignorarlas en los videos que considera Shorts (verticales, de hasta 3 minutos) sin fallar la publicación, y requiere un canal verificado por teléfono para miniaturas personalizadas. Si YouTube rechaza la miniatura, el video igualmente se publica y Postiz no puede comprobar la elegibilidad con antelación.",
   "youtube_thumbnail_overrides_media": "Esta publicación tiene una miniatura específica de YouTube, que reemplaza la miniatura establecida en la configuración de medios."
 }
