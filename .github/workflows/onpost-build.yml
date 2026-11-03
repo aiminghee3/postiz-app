@@ -54,7 +54,7 @@ jobs:
           # BuildKit exhausted runner memory while exporting layers on top of the
           # large deployed base image; the legacy builder commits layers directly.
           DOCKER_BUILDKIT=0 docker build \
-            --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
+            --build-arg ONPOST_BUILD_REF="$GITHUB_SHA" \
             -t "$image_tag" \
             -f Dockerfile.onpost .
           docker push "$image_tag" | tee /tmp/onpost-push.log
