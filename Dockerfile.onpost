@@ -4,9 +4,10 @@
 # application layers. Builds run in a separate stage and only their outputs are
 # copied into the release, keeping exported layers small enough for CI runners.
 FROM ghcr.io/aiminghee3/onpost@sha256:aa0983f74485edca049b0bb10eed54a78336b6496e978db7171a7484b81f0df8 AS build
-ARG ONPOST_SOURCE_REF
-RUN test "${#ONPOST_SOURCE_REF}" -eq 40 && printf '%s' "$ONPOST_SOURCE_REF" | grep -Eq '^[a-f0-9]{40}$'
-ENV ONPOST_SOURCE_REF=$ONPOST_SOURCE_REF
+ARG ONPOST_BUILD_REF
+RUN test "${#ONPOST_BUILD_REF}" -eq 40 && printf '%s' "$ONPOST_BUILD_REF" | grep -Eq '^[a-f0-9]{40}$'
+# The base image already sets ONPOST_SOURCE_REF, which would shadow a same-named ARG.
+ENV ONPOST_SOURCE_REF=$ONPOST_BUILD_REF
 ENV NEXT_PUBLIC_VERSION=onpost-2026.10.20
 WORKDIR /app
 COPY libraries/nestjs-libraries/src/integrations/social/youtube.provider.ts /app/libraries/nestjs-libraries/src/integrations/social/youtube.provider.ts
@@ -22,8 +23,9 @@ COPY libraries/react-shared-libraries/src/translation/locales /app/libraries/rea
 COPY LICENSE ONPOST_CHANGES.md Dockerfile.onpost /app/
 RUN NODE_OPTIONS="--max-old-space-size=4096" NEXT_TELEMETRY_DISABLED=1 pnpm run build:frontend && rm -rf /app/apps/frontend/.next/cache
 FROM ghcr.io/aiminghee3/onpost@sha256:aa0983f74485edca049b0bb10eed54a78336b6496e978db7171a7484b81f0df8
-ARG ONPOST_SOURCE_REF
-ENV ONPOST_SOURCE_REF=$ONPOST_SOURCE_REF
+ARG ONPOST_BUILD_REF
+# The base image already sets ONPOST_SOURCE_REF, which would shadow a same-named ARG.
+ENV ONPOST_SOURCE_REF=$ONPOST_BUILD_REF
 ENV NEXT_PUBLIC_VERSION=onpost-2026.10.20
 WORKDIR /app
 COPY libraries/nestjs-libraries/src/integrations/social/youtube.provider.ts /app/libraries/nestjs-libraries/src/integrations/social/youtube.provider.ts
@@ -38,5 +40,5 @@ COPY --from=build /app/apps/orchestrator/dist /app/apps/orchestrator/dist
 COPY --from=build /app/apps/frontend/.next /app/apps/frontend/.next
 LABEL org.opencontainers.image.title="Onpost" \
       org.opencontainers.image.source="https://github.com/aiminghee3/postiz-app" \
-      org.opencontainers.image.revision=$ONPOST_SOURCE_REF \
+      org.opencontainers.image.revision=$ONPOST_BUILD_REF \
       org.opencontainers.image.licenses="AGPL-3.0-or-later"
