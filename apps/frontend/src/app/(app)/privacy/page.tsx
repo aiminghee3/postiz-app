@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="개인정보처리방침">
+    <LegalPage title="개인정보처리방침" date="2026년 11월 3일">
       <p>
         이누(이하 ‘운영자’)는 Onpost에서 계정 연결, 콘텐츠 준비, 예약 발행 및
         이용자가 설정한 Instagram 댓글 자동 DM 기능을 제공합니다. 이 방침은
@@ -93,7 +93,40 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>4. 보관 및 삭제</h2>
+        <h2>4. TikTok 데이터</h2>
+        <p>
+          이용자가 TikTok 계정을 연결하면 TikTok Login Kit으로 이용자가 승인한
+          범위의 정보만 받습니다. 기본 프로필(open ID, 닉네임, 프로필 사진)은
+          연결 계정 식별과 게시 전 계정 확인 화면에, 영상 업로드·게시 권한은
+          이용자가 직접 요청한 영상 게시에만 사용합니다.
+        </p>
+        <ul>
+          <li>
+            저장 정보: TikTok open ID, 닉네임, 프로필 사진, 액세스·갱신 토큰,
+            게시 요청의 영상·문구·공개 범위·상호작용 설정과 게시 ID·처리 상태.
+          </li>
+          <li>
+            게시 전 이용자가 공개 범위와 댓글·듀엣·스티치 허용 여부를 직접
+            선택하며, Onpost는 이를 임의로 정하거나 변경하지 않습니다.
+          </li>
+          <li>
+            TikTok 데이터를 판매하거나 광고 타기팅, AI·ML 모델 학습에 사용하지
+            않으며, 이용자가 요청한 기능 외의 목적으로 사용하지 않습니다.
+          </li>
+          <li>
+            채널 연결을 해제하면 저장된 TikTok 토큰을 더 이상 사용하지 않으며,
+            삭제 요청 시 TikTok 관련 정보를 함께 삭제합니다. TikTok 앱의
+            설정에서도 Onpost 접근 권한을 해제할 수 있습니다.
+          </li>
+        </ul>
+        <p>
+          TikTok data is used only to identify the connected account and to
+          publish videos the user explicitly requests. It is never sold or used
+          for advertising or model training.
+        </p>
+      </section>
+      <section>
+        <h2>5. 보관 및 삭제</h2>
         <p>
           계정과 콘텐츠는 서비스 제공에 필요한 동안 보관합니다. 채널 연결 해제는
           외부 플랫폼의 권한 철회나 저장 정보의 영구 삭제와 별개입니다.
@@ -110,7 +143,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>5. 서비스 운영 및 보호 조치</h2>
+        <h2>6. 서비스 운영 및 보호 조치</h2>
         <p>
           서비스와 저장소는 Google Cloud에서 운영합니다. 운영에 필요한 범위에서
           호스팅 사업자가 정보를 처리합니다. HTTPS, 접근 권한 제한 및 서버 접근
@@ -120,7 +153,7 @@ export default function PrivacyPage() {
         </p>
       </section>
       <section>
-        <h2>6. 이용자의 권리와 브라우저 저장소</h2>
+        <h2>7. 이용자의 권리와 브라우저 저장소</h2>
         <p>
           정보 열람·정정·삭제·처리 정지와 권한 철회 관련 문의는 아래 이메일로
           접수합니다. 세션 및 언어 설정 쿠키는 서비스 이용에 사용되며,
