@@ -47,6 +47,9 @@ jobs:
         working-directory: source
         run: |
           set -euo pipefail
+          # Record runner pressure so a killed export leaves evidence.
+          (while true; do date -u +%T; free -m | sed -n 2p; df -h / | tail -1; sleep 15; done) > /tmp/onpost-resources.log 2>&1 &
+          trap 'echo "--- resources"; tail -40 /tmp/onpost-resources.log; echo "--- kernel"; sudo dmesg | tail -20' EXIT
           image_tag="$IMAGE_NAME:sha-$GITHUB_SHA"
           docker buildx build \
             --load \
