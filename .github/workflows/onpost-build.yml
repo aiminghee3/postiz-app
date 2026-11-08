@@ -31,17 +31,44 @@ jobs:
           git fetch --depth=1 origin "$GITHUB_SHA"
           git checkout --detach FETCH_HEAD
 
-      - name: Build the branded frontend with the existing backend
+      - name: Reclaim runner disk for the application image
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /usr/local/share/powershell /opt/ghc
+          df -h /
+          df -i /
+
+      - name: Authenticate to this fork's container registry
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build and push the branded image directly to the registry
+        id: build
         working-directory: source
         run: |
-          docker build -f Dockerfile.onpost \
-            --build-arg ONPOST_SOURCE_REF="$GITHUB_SHA" \
-            -t "$IMAGE_NAME:sha-$GITHUB_SHA" .
+          set -euo pipefail
+          # Record runner pressure so a killed export leaves evidence.
+          (while true; do date -u +%T; free -m | sed -n 2p; df -h / | tail -1; sleep 15; done) > /tmp/onpost-resources.log 2>&1 &
+          trap 'echo "--- resources"; tail -40 /tmp/onpost-resources.log; echo "--- kernel"; sudo dmesg | tail -20' EXIT
+          image_tag="$IMAGE_NAME:sha-$GITHUB_SHA"
+          # BuildKit exhausted runner memory while exporting layers on top of the
+          # large deployed base image; the legacy builder commits layers directly.
+          DOCKER_BUILDKIT=0 docker build \
+            --build-arg ONPOST_BUILD_REF="$GITHUB_SHA" \
+            -t "$image_tag" \
+            -f Dockerfile.onpost .
+          docker push "$image_tag" | tee /tmp/onpost-push.log
+          digest="$(sed -n 's/^.*digest: \(sha256:[a-f0-9]\{64\}\).*$/\1/p' /tmp/onpost-push.log | tail -n 1)"
+          test "${#digest}" -eq 71
+          printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
 
-      - name: Verify public branding and exact source access before publishing
+      - name: Verify public branding and exact source access
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           set -euo pipefail
-          image="$IMAGE_NAME:sha-$GITHUB_SHA"
+          image="$IMAGE_NAME@$IMAGE_DIGEST"
+          docker pull "$image"
           docker run --rm --entrypoint sh "$image" -c 'cmp /app/LICENSE /app/apps/frontend/public/open-source/LICENSE.txt'
           docker run --detach --name onpost-preview --entrypoint sh \
             -p 127.0.0.1:14200:4200 \
@@ -79,11 +106,6 @@ jobs:
           curl -fsS http://127.0.0.1:14200/open-source/LICENSE.txt -o /tmp/onpost-LICENSE
           cmp source/LICENSE /tmp/onpost-LICENSE
 
-      - name: Publish a versioned image to this fork's container registry
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Record the verified immutable image
         run: |
-          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
-          docker push "$IMAGE_NAME:sha-$GITHUB_SHA"
-          digest="$(docker image inspect "$IMAGE_NAME:sha-$GITHUB_SHA" --format '{{index .RepoDigests 0}}')"
-          printf 'Image: `%s`\nSource: https://github.com/%s/tree/%s\n' "$digest" "$GITHUB_REPOSITORY" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Image: `%s@%s`\nSource: https://github.com/%s/tree/%s\n' "$IMAGE_NAME" "${{ steps.build.outputs.digest }}" "$GITHUB_REPOSITORY" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
